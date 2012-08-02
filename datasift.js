@@ -49,6 +49,9 @@ function DataSift(username, apiKey, host, port) {
 	//Data
 	this.data = '';
 
+	//When did we last receive data?
+	this.lastReceivedDataDate = null;
+
 	//Add a listener for processing closing
 	process.on('exit', function () {
 		self.disconnect();
@@ -138,7 +141,7 @@ DataSift.prototype.connect = function() {
 	var self = this;
 	
 	//Connect if we are allowed
-	if (this.lastConnect == null || this.lastConnect < new Date().getTime() - 1500) {
+	if (this.lastConnect == null || this.lastConnect < new Date().getTime() - 250) {
 		
 		//Create the headers
 		var headers = {
@@ -210,6 +213,8 @@ DataSift.prototype.disconnect = function(forced) {
 		this.request = null;
 		this.response = null;
 		
+		// We do not want to convert the next error in this case
+		this.convertNextError = false;
 	} else if (this.request !== null) {
 		//Send the stop message and convert the error response
 		this.convertNextError = true;
@@ -280,6 +285,8 @@ DataSift.prototype.send = function(message) {
  * @return void
  */
 DataSift.prototype.receivedData = function(json) {
+	this.lastReceivedDataDate = new Date();
+
 	//Check for errors
 	if (json.status == "failure") {
 		if (this.convertNextError) {
